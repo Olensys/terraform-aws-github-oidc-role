@@ -1,6 +1,6 @@
-# __NAME__
+# terraform-aws-github-oidc-role
 
-__DESCRIPTION__
+IAM role assumable by GitHub Actions through OIDC, scoped to named repositories, environments and branches
 
 ## Opinions
 
@@ -10,7 +10,7 @@ __DESCRIPTION__
 
 ```hcl
 module "this" {
-  source = "git::https://github.com/Olensys/__NAME__.git?ref=v1.0.0"
+  source = "git::https://github.com/Olensys/terraform-aws-github-oidc-role.git?ref=v1.0.0"
 
   name = "example"
   context = {
