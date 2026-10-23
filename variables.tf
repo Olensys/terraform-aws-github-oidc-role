@@ -2,8 +2,8 @@ variable "name" {
   description = "Resource name. Lowercase letters, digits and hyphens."
   type        = string
   validation {
-    condition     = can(regex("^[a-z0-9-]{1,63}$", var.name))
-    error_message = "name must match ^[a-z0-9-]{1,63}$."
+    condition     = can(regex("^[a-z0-9-]{1,64}$", var.name))
+    error_message = "name must match ^[a-z0-9-]{1,64}$."
   }
 }
 
@@ -30,7 +30,60 @@ variable "create" {
   default     = true
 }
 
-# GCP modules rename this variable to `labels` and add `project_id` after `context`.
+variable "create_provider" {
+  description = "Create the account's GitHub OIDC identity provider (token.actions.githubusercontent.com). An account can hold only one, so enable this in exactly one module instance per account."
+  type        = bool
+  default     = false
+}
+
+variable "repositories" {
+  description = "Repositories (keyed as owner/repo) allowed to assume the role, each with the environments, branches and pull requests that may do so."
+  type = map(object({
+    environments        = optional(list(string), [])
+    branches            = optional(list(string), [])
+    allow_pull_requests = optional(bool, false)
+  }))
+  validation {
+    condition     = alltrue([for repo in keys(var.repositories) : can(regex("^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", repo))])
+    error_message = "Each repositories key must be in the form owner/repo, using letters, digits, underscore, dot and hyphen."
+  }
+  validation {
+    condition = alltrue([
+      for cfg in values(var.repositories) :
+      length(cfg.environments) > 0 || length(cfg.branches) > 0 || cfg.allow_pull_requests
+    ])
+    error_message = "Each repository must declare at least one environment, at least one branch, or allow_pull_requests = true."
+  }
+}
+
+variable "policy_arns" {
+  description = "ARNs of managed policies attached to the role."
+  type        = list(string)
+  default     = []
+}
+
+variable "policy_json" {
+  description = "Inline policy document (JSON) attached to the role. Null attaches none."
+  type        = string
+  default     = null
+}
+
+variable "permissions_boundary_arn" {
+  description = "ARN of the permissions boundary policy for the role. Null sets none."
+  type        = string
+  default     = null
+}
+
+variable "max_session_duration_s" {
+  description = "Maximum session duration in seconds, 3600 to 43200."
+  type        = number
+  default     = 3600
+  validation {
+    condition     = var.max_session_duration_s >= 3600 && var.max_session_duration_s <= 43200
+    error_message = "max_session_duration_s must be between 3600 and 43200."
+  }
+}
+
 variable "tags" {
   description = "Tags merged onto every taggable resource, applied last."
   type        = map(string)

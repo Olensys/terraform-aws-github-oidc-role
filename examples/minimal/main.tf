@@ -1,7 +1,7 @@
 module "this" {
   source = "../../"
 
-  name = "example"
+  name = "example-github-actions"
   context = {
     organization = "olensys"
     environment  = "test"
@@ -9,4 +9,20 @@ module "this" {
     owner        = "platform"
     cost_center  = "eng"
   }
+
+  # Set to false when the account already has a GitHub OIDC provider.
+  create_provider = true
+
+  repositories = {
+    "olensys/example" = {
+      environments        = ["test"]
+      branches            = ["main"]
+      allow_pull_requests = true
+    }
+  }
+}
+
+output "subjects" {
+  description = "Subjects allowed to assume the role."
+  value       = module.this.subjects
 }
