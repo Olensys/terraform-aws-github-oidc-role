@@ -11,6 +11,11 @@ output "name" {
 output "arn" {
   description = "ARN of the IAM role. Null when create is false."
   value       = var.create ? module.this.arn : null
+
+  precondition {
+    condition     = !var.create || length(local.subjects) > 0
+    error_message = "A created role must trust at least one subject: repositories must contain at least one repository, otherwise the trust policy would have no sub condition and any GitHub Actions workflow could assume the role."
+  }
 }
 
 output "provider_arn" {

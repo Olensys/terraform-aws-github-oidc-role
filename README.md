@@ -5,7 +5,7 @@ IAM role assumable by GitHub Actions through OIDC, scoped to named repositories,
 ## Opinions
 
 - One GitHub OIDC provider per account: create it once with `create_provider = true` in a single instance; every other instance leaves it `false` and trusts the account's existing provider.
-- No wildcard subjects. Subjects are built as `repo:<repo>:environment:<env>` and `repo:<repo>:ref:refs/heads/<branch>`; a repository with no environment, branch or pull-request entry is rejected rather than trusted broadly.
+- No wildcard subjects. Subjects are built as `repo:<repo>:environment:<env>` and `repo:<repo>:ref:refs/heads/<branch>`; a repository with no environment, branch or pull-request entry is rejected, as are wildcards in environment and branch names, and a created role must trust at least one subject (an empty `repositories` map is accepted only with `create = false`).
 - Pull request runs (`repo:<repo>:pull_request`) are trusted only when `allow_pull_requests = true` for that repository.
 - Permissions come from managed policy ARNs (`policy_arns`) and, optionally, one inline policy (`policy_json`) named after the role. Prefer managed ARNs for shared permissions and the inline policy for permissions specific to this role.
 - The role name is exactly `name` (no generated suffix), and `max_session_duration_s` defaults to 3600 seconds (1 hour).

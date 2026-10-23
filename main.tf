@@ -1,5 +1,10 @@
-data "aws_partition" "current" {}
-data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {
+  count = var.create ? 1 : 0
+}
+
+data "aws_caller_identity" "current" {
+  count = var.create ? 1 : 0
+}
 
 locals {
   tags = merge(var.context.extra_tags, var.tags)
@@ -17,10 +22,10 @@ locals {
 
   create_provider = var.create && var.create_provider
 
-  # Keyed by the ARN's resource part so the for_each keys stay stable and readable.
-  policies = { for arn in var.policy_arns : replace(element(split(":", arn), length(split(":", arn)) - 1), "/[^A-Za-z0-9_-]/", "_") => arn }
+  # Keyed by position: keys must be known at plan even when an ARN is not, and cannot collide.
+  policies = { for i, arn in var.policy_arns : format("policy-%02d", i) => arn }
 
-  existing_provider_arn = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${local.github_provider}"
+  existing_provider_arn = "arn:${try(data.aws_partition.current[0].partition, "aws")}:iam::${try(data.aws_caller_identity.current[0].account_id, "")}:oidc-provider/${local.github_provider}"
 }
 
 module "provider" {

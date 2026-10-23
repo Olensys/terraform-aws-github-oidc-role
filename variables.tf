@@ -54,6 +54,14 @@ variable "repositories" {
     ])
     error_message = "Each repository must declare at least one environment, at least one branch, or allow_pull_requests = true."
   }
+  validation {
+    condition = alltrue(flatten([
+      for cfg in values(var.repositories) : [
+        for e in concat(cfg.environments, cfg.branches) : length(e) > 0 && !strcontains(e, "*")
+      ]
+    ]))
+    error_message = "Environment and branch names must be non-empty and must not contain a wildcard (*)."
+  }
 }
 
 variable "policy_arns" {

@@ -72,7 +72,7 @@ run "test_provider_not_created_by_default" {
   }
 
   assert {
-    condition     = output.provider_arn != null
+    condition     = endswith(output.provider_arn, ":oidc-provider/token.actions.githubusercontent.com")
     error_message = "provider_arn must reference the account's existing provider."
   }
 }
@@ -213,5 +213,52 @@ run "test_tags_contract" {
   assert {
     condition     = output.tags.Team == "z"
     error_message = "context.extra_tags must be merged in."
+  }
+}
+
+run "test_empty_repositories_rejected" {
+  command = plan
+
+  variables {
+    repositories = {}
+  }
+
+  expect_failures = [output.arn]
+}
+
+run "test_empty_repositories_allowed_when_not_creating" {
+  command = plan
+
+  variables {
+    create       = false
+    repositories = {}
+  }
+
+  assert {
+    condition     = output.arn == null
+    error_message = "create = false must accept an empty repositories map."
+  }
+}
+
+run "test_wildcard_branch_rejected" {
+  command = plan
+
+  variables {
+    repositories = { "olensys/app" = { branches = ["release/*"] } }
+  }
+
+  expect_failures = [var.repositories]
+}
+
+run "test_policy_arns_with_same_last_segment" {
+  command = plan
+
+  variables {
+    policy_arns = ["arn:aws:iam::111111111111:policy/shared/readonly", "arn:aws:iam::222222222222:policy/other/readonly"]
+  }
+
+  assert {
+    condition     = output.name == "example"
+    error_message = "Two policy ARNs with the same last segment must not collide."
   }
 }
