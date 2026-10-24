@@ -16,6 +16,11 @@ output "arn" {
     condition     = !var.create || length(local.subjects) > 0
     error_message = "A created role must trust at least one subject: repositories must contain at least one repository, otherwise the trust policy would have no sub condition and any GitHub Actions workflow could assume the role."
   }
+
+  precondition {
+    condition     = !var.create || length(jsonencode(local.subjects)) <= 1800
+    error_message = "Too many repositories/branches for one role's trust policy (IAM limit 2048 characters); split across roles or narrow the list."
+  }
 }
 
 output "provider_arn" {
@@ -29,7 +34,7 @@ output "provider_created" {
 }
 
 output "subjects" {
-  description = "OIDC subject patterns (sub) allowed to assume the role: the legacy repo:OWNER/REPO form and the immutable repo:OWNER@*/REPO@* form for every environment, branch and pull request entry. Null when create is false."
+  description = "OIDC subject patterns (sub) allowed to assume the role, in the form(s) selected by subject_format (immutable repo:OWNER@*/REPO@*, legacy repo:OWNER/REPO, or both) for every environment, branch and pull request entry. Null when create is false."
   value       = var.create ? local.subjects : null
 }
 

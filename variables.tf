@@ -97,3 +97,13 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "subject_format" {
+  description = "Which sub claim form the trust policy accepts: immutable (repo:<owner>@*/<repo>@*:...), legacy (repo:<owner>/<repo>:...) or both. Use immutable when the repositories have use_immutable_subject enabled (GitHub's default), legacy when they do not, both while migrating; both doubles the policy size."
+  type        = string
+  default     = "immutable"
+  validation {
+    condition     = contains(["immutable", "legacy", "both"], var.subject_format)
+    error_message = "subject_format must be one of immutable, legacy, both."
+  }
+}
