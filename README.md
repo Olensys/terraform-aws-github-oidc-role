@@ -36,6 +36,8 @@ module "github_oidc_role" {
 }
 ```
 
+The `examples/minimal` example assumes the account's GitHub OIDC provider already exists (`create_provider = false`); `create_provider = true` belongs to exactly one module instance per account.
+
 The upstream `iam-github-oidc-*` submodules do not exist in `terraform-aws-modules/iam/aws` 6.8.2; the module wraps `modules/iam-oidc-provider` and `modules/iam-role` (with `enable_github_oidc`) instead. The OIDC provider submodule reads the endpoint certificate through the `tls` provider, which Terraform installs automatically when `create_provider = true`.
 
 <!-- BEGIN_TF_DOCS -->

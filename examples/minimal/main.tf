@@ -9,17 +9,17 @@ terraform {
 module "this" {
   source = "../../"
 
-  name = "example-github-actions"
+  name = "olensys-test-oidc"
   context = {
     organization = "olensys"
     environment  = "test"
-    application  = "example"
+    application  = "oidc"
     owner        = "platform"
     cost_center  = "eng"
   }
 
-  # Set to false when the account already has a GitHub OIDC provider.
-  create_provider = true
+  # The shared test account already owns the single GitHub OIDC provider.
+  create_provider = false
 
   repositories = {
     "olensys/example" = {
