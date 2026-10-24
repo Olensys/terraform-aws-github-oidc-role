@@ -269,11 +269,12 @@ run "test_policy_arns_with_same_last_segment" {
   }
 }
 
-run "test_subject_format_default_immutable" {
+run "test_subject_format_immutable" {
   command = plan
 
   variables {
-    repositories = { "olensys/app" = { environments = ["prod"], branches = ["main"], allow_pull_requests = true } }
+    subject_format = "immutable"
+    repositories   = { "olensys/app" = { environments = ["prod"], branches = ["main"], allow_pull_requests = true } }
   }
 
   assert {
@@ -282,7 +283,7 @@ run "test_subject_format_default_immutable" {
       "repo:olensys@*/app@*:ref:refs/heads/main",
       "repo:olensys@*/app@*:pull_request",
     ])
-    error_message = "The default subject_format must emit only immutable (@*) patterns."
+    error_message = "immutable must emit only immutable (@*) patterns."
   }
 }
 
@@ -332,4 +333,17 @@ run "test_trust_policy_size_precondition" {
   }
 
   expect_failures = [output.arn]
+}
+
+run "test_subject_format_default_both" {
+  command = plan
+
+  variables {
+    repositories = { "olensys/app" = { branches = ["main"] } }
+  }
+
+  assert {
+    condition     = toset(output.subjects) == toset(["repo:olensys/app:ref:refs/heads/main", "repo:olensys@*/app@*:ref:refs/heads/main"])
+    error_message = "The default subject_format must emit both forms."
+  }
 }

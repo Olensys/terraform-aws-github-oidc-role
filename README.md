@@ -5,7 +5,7 @@ IAM role assumable by GitHub Actions through OIDC, scoped to named repositories,
 ## Opinions
 
 - One GitHub OIDC provider per account: create it once with `create_provider = true` in a single instance; every other instance leaves it `false` and trusts the account's existing provider.
-- Subjects are built per environment and branch (and `pull_request` when allowed) in the form chosen by `subject_format` (default `immutable`), and wildcards only ever replace the numeric owner and repository IDs; a repository with no environment, branch or pull-request entry is rejected, as are wildcards in environment and branch names, and a created role must trust at least one subject (an empty `repositories` map is accepted only with `create = false`).
+- Subjects are built per environment and branch (and `pull_request` when allowed) in the form chosen by `subject_format` (default `both`), and wildcards only ever replace the numeric owner and repository IDs; a repository with no environment, branch or pull-request entry is rejected, as are wildcards in environment and branch names, and a created role must trust at least one subject (an empty `repositories` map is accepted only with `create = false`).
 - Pull request runs (`repo:<repo>:pull_request`) are trusted only when `allow_pull_requests = true` for that repository.
 - Permissions come from managed policy ARNs (`policy_arns`) and, optionally, one inline policy (`policy_json`) named after the role. Prefer managed ARNs for shared permissions and the inline policy for permissions specific to this role.
 - The role name is exactly `name` (no generated suffix), and `max_session_duration_s` defaults to 3600 seconds (1 hour).
@@ -15,9 +15,9 @@ IAM role assumable by GitHub Actions through OIDC, scoped to named repositories,
 
 GitHub can issue tokens whose `sub` claim is `repo:OWNER@OWNER_ID/REPO@REPO_ID:ref:refs/heads/BRANCH` (immutable subject) instead of `repo:OWNER/REPO:ref:refs/heads/BRANCH`. A trust policy comparing `sub` to the wrong form fails with `AssumeRoleWithWebIdentity` access denied. The `subject_format` input selects what the `StringLike` condition on `sub` accepts:
 
-- `immutable` (default): `repo:OWNER@*/REPO@*:<suffix>`. Use when the repositories have immutable subjects enabled, which is GitHub's default now.
+- `immutable`: `repo:OWNER@*/REPO@*:<suffix>`. Recommended for repositories with immutable subjects enabled; GitHub enables immutable subjects on new repositories, so check each repository as described below.
 - `legacy`: `repo:OWNER/REPO:<suffix>`. Use for repositories that still issue the old form.
-- `both`: both patterns. Use while migrating; it doubles the policy size.
+- `both` (default): both patterns, so existing and new repositories work. It doubles the policy size, which is why `immutable` is recommended once all repositories issue the immutable form.
 
 Check a repository with `gh api repos/<owner>/<repo>/actions/oidc/customization/sub` and read `use_immutable_subject`. The `*` stands only in place of the numeric IDs; owner, repository, branch and environment names remain exact, and `aud` stays `StringEquals sts.amazonaws.com`. IAM limits a trust policy to 2048 characters, so the `arn` output fails with a clear message when the rendered subject list exceeds 1800 characters; split repositories across several roles or narrow the list.
 
@@ -86,7 +86,7 @@ The upstream `iam-github-oidc-*` submodules do not exist in `terraform-aws-modul
 | <a name="input_permissions_boundary_arn"></a> [permissions\_boundary\_arn](#input\_permissions\_boundary\_arn) | ARN of the permissions boundary policy for the role. Null sets none. | `string` | `null` | no |
 | <a name="input_policy_arns"></a> [policy\_arns](#input\_policy\_arns) | ARNs of managed policies attached to the role. | `list(string)` | `[]` | no |
 | <a name="input_policy_json"></a> [policy\_json](#input\_policy\_json) | Inline policy document (JSON) attached to the role. Null attaches none. | `string` | `null` | no |
-| <a name="input_subject_format"></a> [subject\_format](#input\_subject\_format) | Which sub claim form the trust policy accepts: immutable (repo:<owner>@*/<repo>@*:...), legacy (repo:<owner>/<repo>:...) or both. Use immutable when the repositories have use\_immutable\_subject enabled (GitHub's default), legacy when they do not, both while migrating; both doubles the policy size. | `string` | `"immutable"` | no |
+| <a name="input_subject_format"></a> [subject\_format](#input\_subject\_format) | Which sub claim form the trust policy accepts: immutable (repo:<owner>@*/<repo>@*:...), legacy (repo:<owner>/<repo>:...) or both. Both is the default and doubles the policy size; use immutable when the repositories have use\_immutable\_subject enabled, legacy when they do not. | `string` | `"both"` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags merged onto every taggable resource, applied last. | `map(string)` | `{}` | no |
 
 ## Outputs

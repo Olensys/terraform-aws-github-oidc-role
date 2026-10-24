@@ -14,7 +14,7 @@ run "apply_minimal" {
   }
 
   assert {
-    condition     = alltrue([for s in output.subjects : !strcontains(s, "*")])
-    error_message = "No wildcard subject may be emitted."
+    condition     = contains(output.subjects, "repo:olensys@*/example@*:environment:test")
+    error_message = "The immutable environment subject must be in the trust policy under the default subject_format."
   }
 }

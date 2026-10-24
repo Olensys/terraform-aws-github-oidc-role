@@ -12,7 +12,7 @@ locals {
   github_provider = "token.actions.githubusercontent.com"
 
   # subject_format selects the forms. GitHub issues either `repo:OWNER/REPO:...` or, with immutable subjects,
-  # `repo:OWNER@OWNER_ID/REPO@REPO_ID:...`. Both forms are trusted. Wildcards
+  # `repo:OWNER@OWNER_ID/REPO@REPO_ID:...`. Wildcards
   # only stand in for the numeric IDs; owner, repository, branch and
   # environment names stay exact, and a bare `repo:<repo>:*` is never emitted.
   subjects = flatten([
