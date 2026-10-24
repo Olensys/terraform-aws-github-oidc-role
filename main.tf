@@ -11,8 +11,8 @@ locals {
 
   github_provider = "token.actions.githubusercontent.com"
 
-  # GitHub issues either `repo:OWNER/REPO:...` or, with immutable subjects,
-  # `repo:OWNER@OWNER_ID/REPO@REPO_ID:...`. Both forms are trusted. Wildcards
+  # subject_format selects the forms. GitHub issues either `repo:OWNER/REPO:...` or, with immutable subjects,
+  # `repo:OWNER@OWNER_ID/REPO@REPO_ID:...`. Wildcards
   # only stand in for the numeric IDs; owner, repository, branch and
   # environment names stay exact, and a bare `repo:<repo>:*` is never emitted.
   subjects = flatten([
@@ -22,8 +22,10 @@ locals {
         [for branch in cfg.branches : "ref:refs/heads/${branch}"],
         cfg.allow_pull_requests ? ["pull_request"] : [],
         ) : [
-        "repo:${repo}:${suffix}",
-        "repo:${split("/", repo)[0]}@*/${split("/", repo)[1]}@*:${suffix}",
+        for s in concat(
+          contains(["legacy", "both"], var.subject_format) ? ["repo:${repo}:${suffix}"] : [],
+          contains(["immutable", "both"], var.subject_format) ? ["repo:${split("/", repo)[0]}@*/${split("/", repo)[1]}@*:${suffix}"] : [],
+        ) : s
       ]
     ]
   ])
@@ -52,7 +54,7 @@ module "this" {
   create          = var.create
   name            = var.name
   use_name_prefix = false
-  description     = "Assumable by GitHub Actions through OIDC for ${join(", ", sort(keys(var.repositories)))}."
+  description     = substr("Assumable by GitHub Actions through OIDC for ${join(", ", sort(keys(var.repositories)))}.", 0, 1000)
 
   enable_github_oidc = true
   github_provider    = local.github_provider

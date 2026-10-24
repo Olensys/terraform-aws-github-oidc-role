@@ -26,6 +26,7 @@ run "test_subjects_from_environments" {
   command = plan
 
   variables {
+    subject_format = "both"
     repositories = {
       "olensys/app" = { environments = ["prod", "staging"], branches = ["main"] }
     }
@@ -50,6 +51,7 @@ run "test_pull_request_subject_only_when_allowed" {
   command = plan
 
   variables {
+    subject_format = "both"
     repositories = {
       "olensys/open" = { branches = ["main"], allow_pull_requests = true }
       "olensys/shut" = { branches = ["main"] }
@@ -264,5 +266,84 @@ run "test_policy_arns_with_same_last_segment" {
   assert {
     condition     = output.name == "example"
     error_message = "Two policy ARNs with the same last segment must not collide."
+  }
+}
+
+run "test_subject_format_immutable" {
+  command = plan
+
+  variables {
+    subject_format = "immutable"
+    repositories   = { "olensys/app" = { environments = ["prod"], branches = ["main"], allow_pull_requests = true } }
+  }
+
+  assert {
+    condition = toset(output.subjects) == toset([
+      "repo:olensys@*/app@*:environment:prod",
+      "repo:olensys@*/app@*:ref:refs/heads/main",
+      "repo:olensys@*/app@*:pull_request",
+    ])
+    error_message = "immutable must emit only immutable (@*) patterns."
+  }
+}
+
+run "test_subject_format_legacy" {
+  command = plan
+
+  variables {
+    subject_format = "legacy"
+    repositories   = { "olensys/app" = { branches = ["main"] } }
+  }
+
+  assert {
+    condition     = toset(output.subjects) == toset(["repo:olensys/app:ref:refs/heads/main"])
+    error_message = "legacy must emit only repo:<owner>/<repo> subjects."
+  }
+}
+
+run "test_subject_format_both" {
+  command = plan
+
+  variables {
+    subject_format = "both"
+    repositories   = { "olensys/app" = { branches = ["main"] } }
+  }
+
+  assert {
+    condition     = toset(output.subjects) == toset(["repo:olensys/app:ref:refs/heads/main", "repo:olensys@*/app@*:ref:refs/heads/main"])
+    error_message = "both must emit the legacy and the immutable pattern."
+  }
+}
+
+run "test_subject_format_validation" {
+  command = plan
+
+  variables {
+    subject_format = "mutable"
+  }
+
+  expect_failures = [var.subject_format]
+}
+
+run "test_trust_policy_size_precondition" {
+  command = plan
+
+  variables {
+    repositories = { for i in range(40) : "olensys/service-number-${i}" => { branches = ["main"] } }
+  }
+
+  expect_failures = [output.arn]
+}
+
+run "test_subject_format_default_both" {
+  command = plan
+
+  variables {
+    repositories = { "olensys/app" = { branches = ["main"] } }
+  }
+
+  assert {
+    condition     = toset(output.subjects) == toset(["repo:olensys/app:ref:refs/heads/main", "repo:olensys@*/app@*:ref:refs/heads/main"])
+    error_message = "The default subject_format must emit both forms."
   }
 }
