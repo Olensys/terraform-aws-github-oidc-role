@@ -1,6 +1,6 @@
 # Run only by the nightly integration workflow, against real cloud credentials.
-# Applies the example, which also creates the account's GitHub OIDC provider, so the
-# target account must not already have one.
+# Applies the example, which reuses the account's existing GitHub OIDC provider
+# (create_provider = false), so the target account must already have one.
 run "apply_minimal" {
   command = apply
 
