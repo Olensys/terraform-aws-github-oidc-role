@@ -14,21 +14,21 @@ IAM role assumable by GitHub Actions through OIDC, scoped to named repositories,
 ## Usage
 
 ```hcl
-module "this" {
-  source = "git::https://github.com/Olensys/terraform-aws-github-oidc-role.git?ref=v1.0.0"
+module "naming" {
+  source  = "git::https://github.com/Olensys/terraform-null-naming.git?ref=v1.0.1"
+  context = var.context
+}
 
-  name = "example"
-  context = {
-    organization = "olensys"
-    environment  = "dev"
-    application  = "example"
-    owner        = "platform"
-    cost_center  = "eng"
-  }
+module "github_oidc_role" {
+  source  = "git::https://github.com/Olensys/terraform-aws-github-oidc-role.git?ref=v1.0.2"
+  name    = module.naming.name
+  context = var.context
 
   repositories = {
     "olensys/app" = { environments = ["prod"], branches = ["main"] }
   }
+
+  tags = module.naming.tags
 }
 ```
 
