@@ -32,13 +32,17 @@ run "test_subjects_from_environments" {
   }
 
   assert {
-    condition     = toset(output.subjects) == toset(["repo:olensys/app:environment:prod", "repo:olensys/app:environment:staging", "repo:olensys/app:ref:refs/heads/main"])
-    error_message = "subjects must be built from environments and branches only."
+    condition = toset(output.subjects) == toset([
+      "repo:olensys/app:environment:prod", "repo:olensys@*/app@*:environment:prod",
+      "repo:olensys/app:environment:staging", "repo:olensys@*/app@*:environment:staging",
+      "repo:olensys/app:ref:refs/heads/main", "repo:olensys@*/app@*:ref:refs/heads/main",
+    ])
+    error_message = "subjects must list the legacy and the immutable form for every environment and branch."
   }
 
   assert {
-    condition     = alltrue([for s in output.subjects : !strcontains(s, "*")])
-    error_message = "subjects must never contain a wildcard."
+    condition     = alltrue([for s in output.subjects : startswith(s, "repo:olensys/app:") || startswith(s, "repo:olensys@*/app@*:")])
+    error_message = "Wildcards must only replace the owner and repository IDs; the names stay exact."
   }
 }
 
@@ -53,13 +57,13 @@ run "test_pull_request_subject_only_when_allowed" {
   }
 
   assert {
-    condition     = contains(output.subjects, "repo:olensys/open:pull_request")
-    error_message = "pull_request subject must be present when allow_pull_requests is true."
+    condition     = contains(output.subjects, "repo:olensys/open:pull_request") && contains(output.subjects, "repo:olensys@*/open@*:pull_request")
+    error_message = "pull_request subjects (both forms) must be present when allow_pull_requests is true."
   }
 
   assert {
-    condition     = !contains(output.subjects, "repo:olensys/shut:pull_request")
-    error_message = "pull_request subject must be absent by default."
+    condition     = !contains(output.subjects, "repo:olensys/shut:pull_request") && !contains(output.subjects, "repo:olensys@*/shut@*:pull_request")
+    error_message = "pull_request subjects must be absent by default."
   }
 }
 

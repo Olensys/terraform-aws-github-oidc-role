@@ -11,13 +11,21 @@ locals {
 
   github_provider = "token.actions.githubusercontent.com"
 
-  # Exact-match subjects only; a bare `repo:<repo>:*` is never emitted.
+  # GitHub issues either `repo:OWNER/REPO:...` or, with immutable subjects,
+  # `repo:OWNER@OWNER_ID/REPO@REPO_ID:...`. Both forms are trusted. Wildcards
+  # only stand in for the numeric IDs; owner, repository, branch and
+  # environment names stay exact, and a bare `repo:<repo>:*` is never emitted.
   subjects = flatten([
-    for repo, cfg in var.repositories : concat(
-      [for env in cfg.environments : "repo:${repo}:environment:${env}"],
-      [for branch in cfg.branches : "repo:${repo}:ref:refs/heads/${branch}"],
-      cfg.allow_pull_requests ? ["repo:${repo}:pull_request"] : [],
-    )
+    for repo, cfg in var.repositories : [
+      for suffix in concat(
+        [for env in cfg.environments : "environment:${env}"],
+        [for branch in cfg.branches : "ref:refs/heads/${branch}"],
+        cfg.allow_pull_requests ? ["pull_request"] : [],
+        ) : [
+        "repo:${repo}:${suffix}",
+        "repo:${split("/", repo)[0]}@*/${split("/", repo)[1]}@*:${suffix}",
+      ]
+    ]
   ])
 
   create_provider = var.create && var.create_provider
@@ -48,7 +56,8 @@ module "this" {
 
   enable_github_oidc = true
   github_provider    = local.github_provider
-  oidc_subjects      = local.subjects
+  # StringLike: the immutable form carries wildcards for the numeric IDs.
+  oidc_wildcard_subjects = local.subjects
 
   policies             = local.policies
   permissions_boundary = var.permissions_boundary_arn
