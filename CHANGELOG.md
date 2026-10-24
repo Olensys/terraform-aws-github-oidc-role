@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.2
+
+### Fixes
+
+- `metadata.yaml` `upstream` now lists both pinned upstream modules (`iam-role` and `iam-oidc-provider`, 6.8.2), formatted like the other multi-upstream modules (joined with ` + `).
+
+### Docs
+
+- README Usage shows the naming module.
+
 ## 1.0.1
 
 ### Fixes
