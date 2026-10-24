@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/Olensys/terraform-aws-github-oidc-role/compare/v1.0.2...v1.0.3) (2026-10-24)
+
+
+### Bug Fixes
+
+* run integration on change and weekly instead of nightly ([dd5565d](https://github.com/Olensys/terraform-aws-github-oidc-role/commit/dd5565d9b6ee4a3bbae19c9811c998b144b71ae9))
+
 ## 1.0.2
 
 ### Fixes
