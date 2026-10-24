@@ -5,11 +5,15 @@ IAM role assumable by GitHub Actions through OIDC, scoped to named repositories,
 ## Opinions
 
 - One GitHub OIDC provider per account: create it once with `create_provider = true` in a single instance; every other instance leaves it `false` and trusts the account's existing provider.
-- No wildcard subjects. Subjects are built as `repo:<repo>:environment:<env>` and `repo:<repo>:ref:refs/heads/<branch>`; a repository with no environment, branch or pull-request entry is rejected, as are wildcards in environment and branch names, and a created role must trust at least one subject (an empty `repositories` map is accepted only with `create = false`).
+- Subjects are built per environment and branch (and `pull_request` when allowed) in both the legacy and the immutable form, and wildcards only ever replace the numeric owner and repository IDs; a repository with no environment, branch or pull-request entry is rejected, as are wildcards in environment and branch names, and a created role must trust at least one subject (an empty `repositories` map is accepted only with `create = false`).
 - Pull request runs (`repo:<repo>:pull_request`) are trusted only when `allow_pull_requests = true` for that repository.
 - Permissions come from managed policy ARNs (`policy_arns`) and, optionally, one inline policy (`policy_json`) named after the role. Prefer managed ARNs for shared permissions and the inline policy for permissions specific to this role.
 - The role name is exactly `name` (no generated suffix), and `max_session_duration_s` defaults to 3600 seconds (1 hour).
 - The trust policy requires audience `sts.amazonaws.com` and issuer `token.actions.githubusercontent.com`.
+
+## Immutable OIDC subjects
+
+GitHub can issue tokens whose `sub` claim is `repo:OWNER@OWNER_ID/REPO@REPO_ID:ref:refs/heads/BRANCH` (immutable subject) instead of `repo:OWNER/REPO:ref:refs/heads/BRANCH`. A trust policy that compares `sub` to the legacy string alone fails with `AssumeRoleWithWebIdentity` access denied. The trust policy therefore uses a `StringLike` condition on `sub` that lists, for every environment, branch and (when allowed) pull request, both `repo:OWNER/REPO:<suffix>` and `repo:OWNER@*/REPO@*:<suffix>`. The `*` stands only in place of the numeric IDs; owner, repository, branch and environment names remain exact, and `aud` stays `StringEquals sts.amazonaws.com`. The `subjects` output lists both forms.
 
 ## Usage
 
@@ -87,6 +91,6 @@ The upstream `iam-github-oidc-*` submodules do not exist in `terraform-aws-modul
 | <a name="output_name"></a> [name](#output\_name) | Name of the IAM role. Null when create is false. |
 | <a name="output_provider_arn"></a> [provider\_arn](#output\_provider\_arn) | ARN of the GitHub OIDC identity provider the role trusts: the one created here, or the account's existing one. Null when create is false. |
 | <a name="output_provider_created"></a> [provider\_created](#output\_provider\_created) | Whether this instance created the GitHub OIDC identity provider. |
-| <a name="output_subjects"></a> [subjects](#output\_subjects) | OIDC subject claims (sub) allowed to assume the role. Null when create is false. |
+| <a name="output_subjects"></a> [subjects](#output\_subjects) | OIDC subject patterns (sub) allowed to assume the role: the legacy repo:OWNER/REPO form and the immutable repo:OWNER@*/REPO@* form for every environment, branch and pull request entry. Null when create is false. |
 | <a name="output_tags"></a> [tags](#output\_tags) | Tags applied to every taggable resource, with context.extra\_tags merged in. Null when create is false. |
 <!-- END_TF_DOCS -->

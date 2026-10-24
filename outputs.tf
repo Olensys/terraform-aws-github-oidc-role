@@ -29,7 +29,7 @@ output "provider_created" {
 }
 
 output "subjects" {
-  description = "OIDC subject claims (sub) allowed to assume the role. Null when create is false."
+  description = "OIDC subject patterns (sub) allowed to assume the role: the legacy repo:OWNER/REPO form and the immutable repo:OWNER@*/REPO@* form for every environment, branch and pull request entry. Null when create is false."
   value       = var.create ? local.subjects : null
 }
 
