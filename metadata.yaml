@@ -1,7 +1,7 @@
 name: terraform-aws-github-oidc-role
 cloud: aws          # aws | google | common
 tier: capability          # primitive | capability | blueprint
-maturity: experimental    # experimental | stable | deprecated
+maturity: stable    # experimental | stable | deprecated
 description: IAM role assumable by GitHub Actions through OIDC, scoped to named repositories, environments and branches
 owners: [platform]
 upstream: "terraform-aws-modules/iam/aws//modules/iam-role 6.8.2 + terraform-aws-modules/iam/aws//modules/iam-oidc-provider 6.8.2"
