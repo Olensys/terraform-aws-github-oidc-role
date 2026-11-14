@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.5](https://github.com/Olensys/terraform-aws-github-oidc-role/compare/v1.0.4...v1.0.5) (2026-11-14)
+
+
+### Bug Fixes
+
+* tag the minimal example's resources through the naming module ([#7](https://github.com/Olensys/terraform-aws-github-oidc-role/issues/7)) ([14f1f8d](https://github.com/Olensys/terraform-aws-github-oidc-role/commit/14f1f8d54214ca8a8f9d40dbd3b8b53c0587d43d))
+
 ## [1.0.4](https://github.com/Olensys/terraform-aws-github-oidc-role/compare/v1.0.3...v1.0.4) (2026-10-24)
 
 
